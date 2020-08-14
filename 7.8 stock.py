@@ -24,7 +24,7 @@ import tushare as ts
 # df.to_csv('sh300.csv')
 
 N = 30
-LR = 0.1
+LR = 0.0001
 EPOCH = 200
 batch_size = 32
 
@@ -74,20 +74,20 @@ class StockPredRNN(tc.nn.Module):
         super(StockPredRNN, self).__init__()
 
         self.layer1 = nn.BatchNorm1d(N)
-        self.layer2 = nn.LSTM(input_size=input_dim, hidden_size=hidden_dim, batch_first=True)
+        self.layer2 = nn.LSTM(input_size=input_dim, hidden_size=hidden_dim, num_layers=2, batch_first=True)
         self.layer3 = nn.BatchNorm1d(hidden_dim)
         self.layer4 = nn.Linear(hidden_dim, 1)
 
     def forward(self, x):
         BNx = self.layer1(x)
-        rnn_out, _ = self.layer2(BNx)
+        rnn_out, _ = self.layer2(x)
         BN2 = self.layer3(rnn_out[:, -1, :])
         out = self.layer4(BN2)
         return out
 
 
 rnn = StockPredRNN(1, 64)
-optimizer = tc.optim.Adam(rnn.parameters(), lr=LR)
+optimizer = tc.optim.SGD(rnn.parameters(), lr=LR, momentum=0.01)
 loss_fn = nn.MSELoss()
 
 lossList = list()
